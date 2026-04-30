@@ -1,100 +1,45 @@
-export const batchInfo = {
-  experimentBatchId: 'EXP-ARU-2026-04-30-A1',
-  microbialBatchId: 'MICRO-BATCH-ALPHA-09',
-  microbialSpecies: 'Mixed Aerobic Consortium M-12',
-  operator: 'Process Automation Team'
+export const NAV_ITEMS = ['Home', 'Site Twin', 'Subsurface', 'AI Control', 'Equipment', 'Simulation', 'Reports']
+export const VIEW_MODES = ['3D View', 'Split View', 'Dashboard View']
+export const LAYERS = ['O₂ Layer', 'Temperature', 'Humidity', 'Pollutant', 'Microbial', 'Sensor Layout']
+export const PHASES = ['Phase 1 Initial Assessment', 'Phase 2 Active Remediation', 'Phase 3 Stabilization', 'Phase 4 Post-Closure']
+
+export const zones = {
+  'Zone A': { oxygen: 13.4, temperature: 37.8, humidity: 43.2, ph: 7.2, degradationRate: 0.72, stabilization: 0.66, risk: 'Low', status: 'Normal' },
+  'Zone B': { oxygen: 8.7, temperature: 45.2, humidity: 41.3, ph: 6.8, degradationRate: 0.68, stabilization: 0.62, risk: 'Medium', status: 'Aerating' },
+  'Zone C': { oxygen: 11.5, temperature: 63.2, humidity: 38.1, ph: 7.5, degradationRate: 0.54, stabilization: 0.51, risk: 'High', status: 'Warning' },
+  'Zone D': { oxygen: 15.1, temperature: 35.9, humidity: 46.7, ph: 7.1, degradationRate: 0.75, stabilization: 0.71, risk: 'Low', status: 'Normal' }
 }
 
-export const sensorStatus = {
-  oxygen: true,
-  temperature: true,
-  humidity: true,
-  ph: true
-}
-
-export const latestTelemetry = {
-  timestamp: '2026-04-30T14:30:00Z',
-  oxygen: 18.4,
-  temperature: 39.8,
-  humidity: 67,
-  ph: 7.1,
-  blowerFrequency: 35,
-  operationMode: 'Auto Control'
-}
+export const sensors = Array.from({ length: 16 }).map((_, i) => ({
+  id: `SN-${String(i + 1).padStart(2, '0')}`,
+  type: ['oxygen', 'temperature', 'humidity', 'pH', 'gas', 'leachate'][i % 6],
+  zone: ['Zone A', 'Zone B', 'Zone C', 'Zone D'][i % 4],
+  status: i === 11 ? 'warning' : i === 14 ? 'offline' : 'online',
+  x: -6 + (i % 8) * 1.6,
+  y: i % 2 ? 1.2 : 0.8,
+  z: -3 + Math.floor(i / 8) * 3,
+  latest: Number((8 + Math.random() * 50).toFixed(1)),
+  unit: ['%', '°C', '%', 'pH', 'ppm', 'm'][i % 6]
+}))
 
 export const alerts = [
-  {
-    level: 'Medium',
-    timestamp: '2026-04-30 13:52:00 UTC',
-    device: 'O2 Sensor Node',
-    cause: 'Transient oxygen dip to 15.8%',
-    result: 'Blower frequency increased to 45 Hz'
-  },
-  {
-    level: 'High',
-    timestamp: '2026-04-30 12:40:00 UTC',
-    device: 'Temperature Sensor Node',
-    cause: 'Temperature peak at 45.7°C',
-    result: 'System switched to Safety Mode for cooldown'
-  }
+  { id: 1, severity: 'danger', title: 'High Temperature in Zone C', detail: 'Average 63.2 °C exceeds threshold.', time: '10:21 AM', target: 'Zone C' },
+  { id: 2, severity: 'warning', title: 'Low O₂ in Zone B', detail: 'Average 8.7% is below target range.', time: '10:20 AM', target: 'Zone B' },
+  { id: 3, severity: 'warning', title: 'Leachate Level Rising in MW-12', detail: 'Level increased by 15% in 24h.', time: '10:18 AM', target: 'MW-12' }
 ]
 
-export const historicalSeries = Array.from({ length: 24 }).map((_, hour) => {
-  const oxygen = 17 + Math.sin(hour / 3) * 1.8 + (hour % 4 === 0 ? 0.5 : 0)
-  const temperature = 38 + Math.cos(hour / 5) * 3.5 + (hour === 13 ? 4.2 : 0)
-  const humidity = 66 + Math.sin(hour / 4) * 6
-  const ph = 7 + Math.cos(hour / 7) * 0.3
+export const recommendations = [
+  'Increase aeration in Zone B by 12%',
+  'Reduce moisture injection in Zone C',
+  'Inspect MW-12 leachate level',
+  'Maintain current aeration in Zone A',
+  'Schedule sensor calibration for Sensor O2-B03'
+]
 
-  return {
-    hour: `${String(hour).padStart(2, '0')}:00`,
-    oxygen: Number(oxygen.toFixed(2)),
-    temperature: Number(temperature.toFixed(2)),
-    humidity: Number(humidity.toFixed(2)),
-    ph: Number(ph.toFixed(2))
-  }
-})
-
-export const deviceDetails = {
-  tank: {
-    name: 'Aerobic Reactor Tank',
-    type: 'Reactor Unit',
-    status: 'Running',
-    description: 'Semi-transparent process vessel for aerobic reaction simulation.'
-  },
-  blower: {
-    name: 'Aeration Blower',
-    type: 'Actuator',
-    status: 'Running',
-    description: 'Provides adjustable airflow according to oxygen control strategy.'
-  },
-  cabinet: {
-    name: 'Control Cabinet',
-    type: 'Control Unit',
-    status: 'Online',
-    description: 'Hosts PLC logic simulation and data acquisition gateway mock.'
-  },
-  oxygen: {
-    name: 'O2 Sensor',
-    type: 'Sensor',
-    status: 'Online',
-    description: 'Measures dissolved oxygen concentration in the reactor headspace.'
-  },
-  temperature: {
-    name: 'Temperature Sensor',
-    type: 'Sensor',
-    status: 'Online',
-    description: 'Tracks process temperature for biological safety control.'
-  },
-  humidity: {
-    name: 'Humidity Sensor',
-    type: 'Sensor',
-    status: 'Online',
-    description: 'Monitors ambient humidity around the reactor zone.'
-  },
-  ph: {
-    name: 'pH Sensor',
-    type: 'Sensor',
-    status: 'Online',
-    description: 'Monitors acidity and alkalinity for microbial suitability analysis.'
-  }
-}
+export const timeSeries = ['00:00', '06:00', '12:00', '18:00'].map((t, i) => ({
+  time: t,
+  oxygen: [11.2, 10.4, 9.6, 10.9][i],
+  temperature: [42.1, 44.3, 47.8, 43.6][i],
+  degradation: [0.52, 0.58, 0.64, 0.68][i],
+  stabilization: [0.48, 0.54, 0.58, 0.62][i]
+}))

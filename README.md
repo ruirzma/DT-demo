@@ -1,79 +1,44 @@
-# Digital Twin Monitoring and Aeration Control Demo for a Single Aerobic Reactor Unit
+# AI-Driven Digital Twin for Aerobic Landfill Remediation and Rapid Stabilization
 
-This project is a fully runnable front-end demonstration of a digital twin system for a single aerobic reactor unit. It uses **mock data only** and does not connect to real equipment, databases, or industrial protocols.
+## Project Overview
+A high-fidelity React + Vite demo of a futuristic engineering command center for landfill aerobic remediation. The interface presents a closed-loop workflow from site sensing to AI optimization, execution, degradation response, progress evaluation, alerts, replay simulation, and reporting.
 
-## Tech Stack
-
-- React + Vite
-- React Three Fiber (Three.js) for a simplified 3D digital twin scene
-- Recharts for 24-hour sensor trends
-
-## Features
-
-- **3D Digital Twin Scene**
-  - Semi-transparent aerobic reactor tank
-  - Aeration blower
-  - Control cabinet
-  - Aeration pipelines
-  - Sensor points for O2, temperature, humidity, and pH
-  - Animated airflow direction indicators
-  - Clickable devices and sensors with information popup cards
-
-- **Real-Time Monitoring Panel**
-  - O2 concentration
-  - Temperature
-  - Humidity
-  - pH
-  - Blower frequency
-  - Operation mode
-  - Current experiment batch ID
-
-- **Aeration Control Logic**
-  - O2 < 16% → 45 Hz
-  - 16% ≤ O2 < 19% → 35 Hz
-  - 19% ≤ O2 ≤ 21% → 25 Hz
-  - O2 > 22% → 15 Hz
-  - Temperature > 45°C → Safety Mode
-  - Any critical sensor offline → Safety Mode
-  - Control action logs are generated and displayed
-
-- **Historical Trend Charts**
-  - 24-hour trends for O2, temperature, humidity, and pH
-  - Variable switch controls for presentation use
-
-- **Alarm and Control Log**
-  - Alarm level, timestamp, device, cause, handling result
-  - Control action logs
-
-- **Microbial Suitability Assessment**
-  - Suitability score from 0 to 100 based on O2, temperature, humidity, and pH
-  - Current microbial batch information display
-
-## Mock Data Location
-
-All mock data files are in:
-
-- `src/data/mockData.js`
-
-## Run Locally
-
+## Installation
 ```bash
 npm install
+```
+
+## Run Locally
+```bash
 npm run dev
 ```
 
-Open the URL shown by Vite in your browser (typically `http://localhost:5173`).
+## Main Features
+- Multi-page navigation states: Home, Site Twin, Subsurface, AI Control, Equipment, Simulation, Reports.
+- 3D digital twin scene using React Three Fiber:
+  - Surface zones (A-D), underground cutaway layers, wells/pipes, AI command center, equipment region.
+  - Clickable zone selection and dynamic zone info card.
+  - Pulsing sensors and animated data-flow lines.
+- KPI strip with live-like metrics and dark glassmorphism UI.
+- Layer toggles (O₂, Temperature, Humidity, Pollutant, Microbial, Sensor Layout) affecting scene overlays.
+- AI recommendation workflow with `Apply Recommendation` feedback toast and zone metric updates.
+- Alerts panel with click-to-focus behavior.
+- Timeline + play/pause with simulated updates.
+- Phase and mode controls (`Manual Mode` / `AI Auto Mode`) with manual sliders.
+- Reports panel and export-action toasts.
 
-## Production Build Check
+## Mock Data
+Mock data is defined in `src/data/mockData.js` and includes:
+- Zone metrics for Zone A/B/C/D.
+- 16 sensors with type, zone, status, xyz position, and latest values.
+- Alert stream entries.
+- AI recommendation entries.
+- Time series for dashboard charts.
 
-```bash
-npm run build
-```
-
-If successful, the static files are generated in the `dist/` directory.
-
-## Notes
-
-- This is a front-end demonstration project for presentation and concept verification.
-- No real hardware communication is implemented.
-- No real database connection is implemented.
+## Recommended Future Extensions
+- MQTT ingestion for live sensor telemetry.
+- Time-series database integration (e.g., InfluxDB / TimescaleDB).
+- AI model API integration for real prediction + control recommendations.
+- Scenario simulation engine with stochastic weather and fault injection.
+- Hardware/PLC integration with control cabinet and fan/valve execution loops.
+- Report generation pipeline and PDF export.

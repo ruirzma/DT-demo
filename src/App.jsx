@@ -1,142 +1,57 @@
-import { useMemo, useState } from 'react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from 'recharts'
-import DigitalTwinScene from './components/DigitalTwinScene'
-import { alerts, batchInfo, deviceDetails, historicalSeries, latestTelemetry, sensorStatus } from './data/mockData'
+import { useEffect, useMemo, useState } from 'react'
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts'
+import DigitalTwinScene from './components/three/DigitalTwinScene'
+import { NAV_ITEMS, VIEW_MODES, LAYERS, PHASES, zones as baseZones, sensors, alerts, timeSeries } from './data/mockData'
+import './styles/globals.css'
 
-function evaluateControl(oxygen, temperature, status) {
-  if (!status.oxygen || !status.temperature || !status.humidity || !status.ph) {
-    return { mode: 'Safety Mode', blowerFrequency: 15, reason: 'Critical sensor offline' }
-  }
-  if (temperature > 45) {
-    return { mode: 'Safety Mode', blowerFrequency: 15, reason: 'Temperature exceeded 45°C' }
-  }
-  if (oxygen < 16) return { mode: 'Auto Control', blowerFrequency: 45, reason: 'O2 below 16%' }
-  if (oxygen < 19) return { mode: 'Auto Control', blowerFrequency: 35, reason: 'O2 between 16% and 19%' }
-  if (oxygen <= 21) return { mode: 'Auto Control', blowerFrequency: 25, reason: 'O2 between 19% and 21%' }
-  if (oxygen > 22) return { mode: 'Auto Control', blowerFrequency: 15, reason: 'O2 above 22%' }
-  return { mode: 'Auto Control', blowerFrequency: 25, reason: 'Stable operating range' }
-}
-
-function suitabilityScore({ oxygen, temperature, humidity, ph }) {
-  const oxygenScore = Math.max(0, 100 - Math.abs(19 - oxygen) * 18)
-  const tempScore = Math.max(0, 100 - Math.abs(38 - temperature) * 6)
-  const humidityScore = Math.max(0, 100 - Math.abs(68 - humidity) * 3)
-  const phScore = Math.max(0, 100 - Math.abs(7 - ph) * 50)
-  return Math.round((oxygenScore + tempScore + humidityScore + phScore) / 4)
-}
+const jitter = (v, s = 0.2) => Number((v + (Math.random() - 0.5) * s).toFixed(2))
 
 export default function App() {
-  const [selectedKey, setSelectedKey] = useState('tank')
-  const [trendVar, setTrendVar] = useState('oxygen')
+  const [tab, setTab] = useState('Home')
+  const [viewMode, setViewMode] = useState('3D View')
+  const [layer, setLayer] = useState('O₂ Layer')
+  const [mode, setMode] = useState('AI Auto Mode')
+  const [phase, setPhase] = useState('Phase 2 Active Remediation')
+  const [playing, setPlaying] = useState(true)
+  const [timeline, setTimeline] = useState(10.4)
+  const [zones, setZones] = useState(baseZones)
+  const [selectedZone, setSelectedZone] = useState('Zone B')
+  const [toast, setToast] = useState('')
 
-  const control = evaluateControl(latestTelemetry.oxygen, latestTelemetry.temperature, sensorStatus)
-  const score = suitabilityScore(latestTelemetry)
+  useEffect(() => { const t = setInterval(() => { if (playing) { setTimeline(v => (v + 0.03) % 24); setZones(z => Object.fromEntries(Object.entries(z).map(([k, val]) => [k, { ...val, oxygen: jitter(val.oxygen, 0.18), temperature: jitter(val.temperature, 0.28), humidity: jitter(val.humidity, 0.22) }])))} }, 1500); return () => clearInterval(t) }, [playing])
 
-  const controlLogs = useMemo(
-    () => [
-      {
-        timestamp: '2026-04-30 14:30:00 UTC',
-        action: `Set blower frequency to ${control.blowerFrequency} Hz`,
-        result: `${control.mode} activated (${control.reason})`
-      },
-      {
-        timestamp: '2026-04-30 13:52:00 UTC',
-        action: 'Increase blower frequency to 45 Hz',
-        result: 'O2 recovered above threshold'
-      }
-    ],
-    [control.blowerFrequency, control.mode, control.reason]
-  )
+  const kpis = useMemo(() => [{ t: 'Sensor Online Rate', v: '98.6%', s: '187 / 190 Online' }, { t: 'Remediation Progress', v: '64.2%', s: '+3.6% vs last week' }, { t: 'Average O₂', v: '12.4%', s: 'Target: 10–18%' }, { t: 'Average Temperature', v: '38.7 °C', s: 'Target: < 60 °C' }, { t: 'Average Humidity', v: '42.1%', s: 'Target: 30–60%' }, { t: 'Risk Score', v: 'Low', s: '2.3 / 10' }], [])
+  const z = zones[selectedZone] || zones['Zone B']
 
-  const selected = deviceDetails[selectedKey]
+  const applyRecommendation = () => { setZones(prev => ({ ...prev, 'Zone B': { ...prev['Zone B'], oxygen: Number((prev['Zone B'].oxygen + 0.5).toFixed(2)), status: 'Aerating' } })); setToast('AI recommendation applied successfully.'); setTimeout(() => setToast(''), 2400) }
 
-  return (
-    <div className="app">
-      <header className="top-bar card">
-        <h1>Digital Twin Monitoring and Aeration Control Demo for a Single Aerobic Reactor Unit</h1>
-        <div className="top-meta">
-          <span>Mode: {control.mode}</span>
-          <span>Batch: {batchInfo.experimentBatchId}</span>
-          <span>Microbial Suitability Score: {score}/100</span>
-        </div>
-      </header>
-
-      <main className="main-grid">
-        <section className="scene-wrap card">
-          <h2>3D Digital Twin Scene</h2>
-          <div className="scene"><DigitalTwinScene onSelect={setSelectedKey} /></div>
-          <div className="device-popup">
-            <h3>{selected.name}</h3>
-            <p>Type: {selected.type}</p>
-            <p>Status: {selected.status}</p>
-            <p>{selected.description}</p>
-          </div>
-        </section>
-
-        <section className="side-wrap">
-          <div className="card monitor-panel">
-            <h2>Real-Time Monitoring Panel</h2>
-            <div className="metrics-grid">
-              <div className="metric"><label>O2 Concentration</label><strong>{latestTelemetry.oxygen}%</strong></div>
-              <div className="metric"><label>Temperature</label><strong>{latestTelemetry.temperature}°C</strong></div>
-              <div className="metric"><label>Humidity</label><strong>{latestTelemetry.humidity}%</strong></div>
-              <div className="metric"><label>pH</label><strong>{latestTelemetry.ph}</strong></div>
-              <div className="metric"><label>Blower Frequency</label><strong>{control.blowerFrequency} Hz</strong></div>
-              <div className="metric"><label>Operation Mode</label><strong>{control.mode}</strong></div>
-              <div className="metric"><label>Current Experiment Batch ID</label><strong>{batchInfo.experimentBatchId}</strong></div>
-            </div>
-          </div>
-
-          <div className="card control-panel">
-            <h2>Aeration Control Logic</h2>
-            <p>Current decision: {control.reason}</p>
-            <ul>
-              <li>If O2 &lt; 16%, set blower to 45 Hz.</li>
-              <li>If 16% ≤ O2 &lt; 19%, hold at 35 Hz.</li>
-              <li>If 19% ≤ O2 ≤ 21%, hold at 25 Hz.</li>
-              <li>If O2 &gt; 22%, reduce to 15 Hz.</li>
-              <li>If temperature &gt; 45°C or critical sensor offline, switch to Safety Mode.</li>
-            </ul>
-            <p>Microbial batch: {batchInfo.microbialBatchId} ({batchInfo.microbialSpecies})</p>
-          </div>
-
-          <div className="card logs-panel">
-            <h2>Alarm and Control Log</h2>
-            <h3>Alarms</h3>
-            {alerts.map((a, idx) => <div key={idx} className="log-row"><span>{a.timestamp}</span><span>{a.level}</span><span>{a.device}</span><span>{a.cause}</span><span>{a.result}</span></div>)}
-            <h3>Control Actions</h3>
-            {controlLogs.map((c, idx) => <div key={idx} className="log-row"><span>{c.timestamp}</span><span>{c.action}</span><span>{c.result}</span></div>)}
-          </div>
-        </section>
-      </main>
-
-      <section className="card chart-wrap">
-        <h2>24-Hour Sensor Trend Charts</h2>
-        <div className="chart-controls">
-          {['oxygen', 'temperature', 'humidity', 'ph'].map((key) => (
-            <button key={key} onClick={() => setTrendVar(key)} className={trendVar === key ? 'active' : ''}>{key.toUpperCase()}</button>
-          ))}
-        </div>
-        <div className="chart-container">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={historicalSeries}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#35536d" />
-              <XAxis dataKey="hour" stroke="#9bb2c5" />
-              <YAxis stroke="#9bb2c5" />
-              <Tooltip />
-              <Line type="monotone" dataKey={trendVar} stroke="#4dd0e1" strokeWidth={3} dot={false} />
-            </LineChart>
-          </ResponsiveContainer>
+  return <div className='app-shell'>
+    <header className='topbar glass'><div><h1>AI-Driven Digital Twin for Aerobic Landfill Remediation and Rapid Stabilization</h1></div><nav>{NAV_ITEMS.map(i => <button key={i} className={tab===i?'active':''} onClick={()=>setTab(i)}>{i}</button>)}</nav><div className='user'>Engineer ▾</div></header>
+    <section className='kpi-row'>{kpis.map(k => <article key={k.t} className='glass kpi'><h4>{k.t}</h4><strong>{k.v}</strong><span>{k.s}</span></article>)}</section>
+    <main className='main-grid'>
+      <aside className='glass side-left'><h3>View Mode</h3>{VIEW_MODES.map(v => <button key={v} onClick={()=>setViewMode(v)} className={viewMode===v?'active':''}>{v}</button>)}<h3>Layers</h3>{LAYERS.map(l => <button key={l} onClick={()=>setLayer(l)} className={layer===l?'active':''}>{l}</button>)}<div className='weather'>24 °C · Cloudy<br/>Wind: 6.2 m/s NE<br/>Last Update: 10:23:45</div></aside>
+      <section className='center glass'>
+        <DigitalTwinScene activeLayer={layer} selectedZone={selectedZone} onSelectZone={(v)=> setTab(NAV_ITEMS.includes(v)?v:tab) || setSelectedZone(v)} sensors={sensors} />
+        <div className='floating'>
+          <h4>{selectedZone}</h4><p>Status: {z.status}</p><p>Avg O₂: {z.oxygen}%</p><p>Temperature: {z.temperature} °C</p><p>Humidity: {z.humidity}%</p><p>Degradation Rate: {z.degradationRate} 1/day</p><p>Stabilization Index: {z.stabilization}</p>
         </div>
       </section>
-    </div>
-  )
+      <aside className='glass side-right'>
+        <h3>System Status</h3><p className='ok'>All Systems Operational</p><p>Sensors: 187 / 190</p><p>Equipment: 32 / 32</p><p>Wells: 124 / 128</p><p>Network: 100%</p>
+        <h3>AI Recommendation</h3><p>Increase aeration in Zone B by 12%</p><small>AI model predicts O₂ below optimal range within 6 hours</small><div className='btns'><button onClick={applyRecommendation}>Apply Recommendation</button><button>View Analysis</button></div>
+        <h3>Alerts (3 Active)</h3>{alerts.map(a => <div key={a.id} className={`alert ${a.severity}`} onClick={() => setSelectedZone(a.target.includes('Zone') ? a.target : 'Zone B')}><strong>{a.title}</strong><small>{a.detail} · {a.time}</small></div>)}
+        <div className='mini'><ResponsiveContainer width='100%' height={180}><LineChart data={timeSeries}><XAxis dataKey='time' stroke='#8ea4b8' /><YAxis stroke='#8ea4b8' /><Tooltip /><Line dataKey='oxygen' stroke='#00D9FF' /><Line dataKey='temperature' stroke='#FFB020' /></LineChart></ResponsiveContainer></div>
+      </aside>
+    </main>
+    <footer className='bottom glass'>
+      <div><button>◀</button><button onClick={()=>setPlaying(p=>!p)}>{playing?'Pause':'Play'}</button><button>▶</button><span>1x</span></div>
+      <div className='timeline'><span>May 20, 2025 10:23:45</span><em>LIVE</em><input type='range' min='0' max='24' step='0.01' value={timeline} onChange={e=>setTimeline(Number(e.target.value))} /></div>
+      <div className='phases'>{PHASES.map(p => <button key={p} className={phase===p?'active':''} onClick={()=>setPhase(p)}>{p}</button>)}</div>
+      <div className='mode'><button className={mode==='Manual Mode'?'active':''} onClick={()=>setMode('Manual Mode')}>Manual Mode</button><button className={mode==='AI Auto Mode'?'active pulse':''} onClick={()=>setMode('AI Auto Mode')}>AI Auto Mode</button></div>
+    </footer>
+    {mode==='Manual Mode' && <div className='manual glass'>Aeration Intensity <input type='range'/> Moisture Injection <input type='range'/> Monitoring Frequency <input type='range'/></div>}
+    {tab==='Simulation' && <div className='overlay glass'>Baseline · Manual Control · AI-Assisted · AI-Optimized · Fault Scenario</div>}
+    {tab==='Reports' && <div className='overlay glass'>Remediation Progress: 64.2% · Pollutant Reduction: 48.5% · Average Stabilization Index: 0.62 · Energy Consumption: 1,284 kWh · System Uptime: 99.1% · Predicted Completion: 142 days <div><button onClick={()=>setToast('Daily report exported.')}>Export Daily Report</button><button onClick={()=>setToast('Weekly report exported.')}>Export Weekly Report</button><button onClick={()=>setToast('Technical summary generated.')}>Generate Technical Summary</button></div></div>}
+    {toast && <div className='toast'>{toast}</div>}
+  </div>
 }
