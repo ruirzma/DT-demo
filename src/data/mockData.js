@@ -48,3 +48,10 @@ export const scenarioProfiles = {
 }
 
 export const baseSeries = ['00:00', '06:00', '12:00', '18:00'].map((t, i) => ({ time: t, oxygen: [11.2, 10.4, 9.6, 10.9][i], temperature: [42.1, 44.3, 47.8, 43.6][i], degradation: [0.52, 0.58, 0.64, 0.68][i], stabilization: [0.48, 0.54, 0.58, 0.62][i] }))
+
+// Compatibility aliases for older branch names
+export const NAV_ITEMS = pages
+export const VIEW_MODES = viewModes
+export const LAYERS = layers
+export const PHASES = phases
+export const timeSeries = baseSeries
