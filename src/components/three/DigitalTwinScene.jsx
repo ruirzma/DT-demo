@@ -13,7 +13,7 @@ const ParticleField = ({ color, count = 80, y = -2.8, spread = 9, speed = 0.2 })
 
 const Fan = ({ position }) => { const ref = useRef(); useFrame((_,d)=>{ if(ref.current) ref.current.rotation.z += d * 5 }); return <group position={position}><mesh><cylinderGeometry args={[0.18,0.18,0.2,18]} /><meshStandardMaterial color="#6f8190" /></mesh><mesh ref={ref}><boxGeometry args={[0.02,0.55,0.08]} /><meshStandardMaterial color="#9ec1d8" emissive="#1e88ff" emissiveIntensity={0.2} /></mesh></group> }
 
-function SceneCore({ activeLayer, page, selectedZone, setSelectedZone, sensors, controlPulse }) {
+function SceneCore({ activeLayer, page, selectedZone, setSelectedZone, setSelectedSensor, sensors, controlPulse }) {
   const color = lc[activeLayer] || '#00D9FF'
   const underground = page === 'Subsurface'
   return <>
@@ -30,7 +30,7 @@ function SceneCore({ activeLayer, page, selectedZone, setSelectedZone, sensors, 
     {Array.from({ length: 16 }).map((_, i) => <group key={i} position={[-9 + (i%8)*2.5,-2.2,-4 + Math.floor(i/8)*6]}><mesh><cylinderGeometry args={[0.08,0.08,4.6]} /><meshStandardMaterial color='#d3e9ff' /></mesh><mesh position={[0,2.3,0]}><sphereGeometry args={[0.12,10,10]} /><meshStandardMaterial color='#00D9FF' emissive='#00D9FF' emissiveIntensity={0.7} /></mesh></group>)}
     <mesh position={[0,-5.2,0]}><torusGeometry args={[10.2,0.08,12,96]} /><meshStandardMaterial color='#1E88FF' emissive='#1E88FF' emissiveIntensity={0.35} /></mesh>
 
-    {sensors.map((s)=><mesh key={s.id} position={s.position} onClick={()=>setSelectedZone(s.zone)}><sphereGeometry args={[0.09,10,10]} /><meshStandardMaterial color={activeLayer==='Sensor Layout'?'#00F5C8':'#00D9FF'} emissive='#00D9FF' emissiveIntensity={0.6} /></mesh>)}
+    {sensors.map((s)=><mesh key={s.id} position={s.position} onClick={()=>{setSelectedZone(s.zone);setSelectedSensor?.(s.id)}}><sphereGeometry args={[0.09,10,10]} /><meshStandardMaterial color={activeLayer==='Sensor Layout'?'#00F5C8':'#00D9FF'} emissive='#00D9FF' emissiveIntensity={0.6} /></mesh>)}
     <Line points={[[-8,1,-3],[8.1,1.3,-4]]} color='#00D9FF' dashed dashSize={0.2} gapSize={0.16} />
     {controlPulse && <Line points={[[8.2,1,-4],[1.2,0.5,-2.8]]} color='#00F5C8' lineWidth={4} />}
 
